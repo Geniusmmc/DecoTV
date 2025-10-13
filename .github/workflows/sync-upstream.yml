@@ -1,0 +1,67 @@
+name: Daily Sync from Upstream
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # 每天 UTC 3 点执行（北京时间 11 点）
+  workflow_dispatch:      # 允许手动触发
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout your repo
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          fetch-depth: 0   # 拉取完整历史，避免合并出错
+
+      - name: Set up Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: git remote add upstream https://github.com/Decohererk/DecoTV.git
+
+      - name: Fetch upstream
+        run: git fetch upstream main
+
+      - name: Create local branch for sync
+        run: |
+          git checkout -b sync-upstream
+          git merge upstream/main --no-edit || true
+
+      - name: Push sync branch
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: sync-upstream
+          force: true
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: sync-upstream
+          base: main
+          title: "🔄 Daily Sync from Upstream"
+          body: |
+            This PR merges the latest changes from upstream `Decohererk/DecoTV:main` into your `main`.
+
+            - Created automatically by GitHub Actions
+            - If there are conflicts, please resolve them manually before merging
+
+      - name: Auto-merge PR if possible
+        if: steps.cpr.outputs.pull-request-operation == 'created'
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+          merge-method: squash
+
+      - name: Delete sync branch after merge
+        if: steps.cpr.outputs.pull-request-operation == 'created'
+        run: |
+          git push origin --delete sync-upstream || true
