@@ -29,8 +29,8 @@ jobs:
 
       - name: Create local branch for sync
         run: |
-          git checkout -b sync-upstream
-          git merge upstream/main --no-edit || true
+          # 将 sync-upstream 分支**直接指向** upstream/main，避免产生 merge commit
+          git checkout -B sync-upstream upstream/main
 
       - name: Push sync branch
         uses: ad-m/github-push-action@v0.6.0
