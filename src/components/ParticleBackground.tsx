@@ -71,6 +71,16 @@ export default function ParticleBackground() {
       });
     }
 
+    // 获取主题渐变色
+    const theme = (() => {
+      const h = themeConfig.hue;
+      const s = themeConfig.saturation;
+      return {
+        a: `hsla(${h}, ${s}%, 60%, 0.09)`,
+        b: `hsla(${(h + 40) % 360}, ${s - 10}%, 55%, 0.08)`,
+      };
+    })();
+
     const draw = (currentTime: number) => {
       // 限制帧率到 30fps，降低 50% CPU 占用
       const elapsed = currentTime - lastFrameTime.current;
@@ -80,35 +90,8 @@ export default function ParticleBackground() {
       }
       lastFrameTime.current = currentTime;
 
-      // 每一帧都检测当前主题模式，确保实时响应
-      const isDarkMode =
-        typeof window !== 'undefined' &&
-        document.documentElement.classList.contains('dark');
-
-      // 获取主题渐变色 - 根据亮暗模式调整
-      const theme = (() => {
-        const h = themeConfig.hue;
-        const s = themeConfig.saturation;
-
-        if (isDarkMode) {
-          // 暗色模式：深色背景
-          return {
-            a: `hsla(${h}, ${s}%, 60%, 0.09)`,
-            b: `hsla(${(h + 40) % 360}, ${s - 10}%, 55%, 0.08)`,
-            clearColor: 'rgba(0, 0, 0, 0.05)',
-          };
-        } else {
-          // 亮色模式：浅色背景，更高亮度
-          return {
-            a: `hsla(${h}, ${s - 30}%, 95%, 0.4)`,
-            b: `hsla(${(h + 40) % 360}, ${s - 35}%, 92%, 0.35)`,
-            clearColor: 'rgba(255, 255, 255, 0.1)',
-          };
-        }
-      })();
-
-      // 使用半透明清除创建拖尾效果 - 根据主题调整
-      ctx.fillStyle = theme.clearColor;
+      // 使用半透明清除创建拖尾效果
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
       ctx.fillRect(0, 0, width, height);
 
       // 静态渐变背景
@@ -140,18 +123,12 @@ export default function ParticleBackground() {
           p.fadeDirection = 1;
         }
 
-        // 绘制粒子 - 亮色模式使用更深的颜色
+        // 绘制粒子
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.closePath();
-        const particleColor = isDarkMode
-          ? `hsla(${p.hue}, 85%, 65%, ${p.alpha})` // 暗色模式：高亮度
-          : `hsla(${p.hue}, 70%, 50%, ${p.alpha * 0.6})`; // 亮色模式：中等亮度 + 降低透明度
-        const shadowColor = isDarkMode
-          ? `hsla(${p.hue}, 90%, 70%, ${p.alpha * 0.8})`
-          : `hsla(${p.hue}, 60%, 45%, ${p.alpha * 0.3})`;
-        ctx.fillStyle = particleColor;
-        ctx.shadowColor = shadowColor;
+        ctx.fillStyle = `hsla(${p.hue}, 85%, 65%, ${p.alpha})`;
+        ctx.shadowColor = `hsla(${p.hue}, 90%, 70%, ${p.alpha * 0.8})`;
         ctx.shadowBlur = 8;
         ctx.fill();
         ctx.shadowBlur = 0;
@@ -178,10 +155,7 @@ export default function ParticleBackground() {
 
           if (d2 < maxDist * maxDist) {
             const alpha = (1 - d2 / (maxDist * maxDist)) * 0.2;
-            const lineColor = isDarkMode
-              ? `hsla(${themeConfig.hue}, 70%, 60%, ${alpha})` // 暗色模式
-              : `hsla(${themeConfig.hue}, 50%, 40%, ${alpha * 0.5})`; // 亮色模式：更深 + 降低透明度
-            ctx.strokeStyle = lineColor;
+            ctx.strokeStyle = `hsla(${themeConfig.hue}, 70%, 60%, ${alpha})`;
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
             ctx.lineTo(b.x, b.y);
