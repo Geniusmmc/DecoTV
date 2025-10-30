@@ -2985,8 +2985,17 @@ const VideoSourceConfig = ({
         return;
       }
 
-      let exportData: any;
-      let filename: string;
+      // 创建导出数据
+      const exportData = sourcesToExport.map((source) => ({
+        name: source.name,
+        key: source.key,
+        api: source.api,
+        detail: source.detail || '',
+        disabled: source.disabled || false,
+        is_adult: source.is_adult || false,
+      }));
+
+      // 生成文件名
       const now = new Date();
       const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
 
