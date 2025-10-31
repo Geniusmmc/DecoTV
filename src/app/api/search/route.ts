@@ -75,10 +75,10 @@ export async function GET(request: NextRequest) {
       .map((result) => (result as PromiseFulfilledResult<any>).value);
     let flattenedResults = successResults.flat();
 
-    // 成人内容过滤逻辑
-    // DisableYellowFilter=false 表示启用过滤(过滤成人内容)
-    // DisableYellowFilter=true 表示禁用过滤(显示所有内容)
-    if (!config.SiteConfig.DisableYellowFilter) {
+    // 🔒 成人内容过滤逻辑
+    // shouldFilterAdult=true 表示启用过滤(过滤成人内容)
+    // shouldFilterAdult=false 表示禁用过滤(显示所有内容)
+    if (shouldFilterAdult) {
       flattenedResults = flattenedResults.filter((result) => {
         const typeName = result.type_name || '';
         const sourceKey = result.source_key || '';
